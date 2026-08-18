@@ -11,7 +11,7 @@ const dashboardRoutes = require("./routes/dashboard");
 const app = express();
 
 app.use(cors({
-    origin: "*"
+    origin: "http://expense-tracker-alpha-gilt-47.vercel.app"
 }));
 app.use(express.json());
 
