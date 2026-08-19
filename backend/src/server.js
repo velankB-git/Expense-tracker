@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const pool = require("./db");
@@ -10,8 +12,13 @@ const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
 
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
 app.use(cors({
-    origin: "https://expense-tracker-a6w1.vercel.app"
+    origin: allowedOrigins
 }));
 app.use(express.json());
 
@@ -40,12 +47,26 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async() => {
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET must be configured");
+}
+
+async function startServer() {
     try {
+        const schemaPath = path.join(__dirname, "../../database/schema.sql");
+        const schema = fs.readFileSync(schemaPath, "utf8");
+        await pool.query(schema);
         await pool.query("SELECT 1");
         console.log("PostgreSQL connected successfully");
     } catch (error) {
-        console.error("PostgreSQL connection failed:", error.message);
+        console.error("Database startup failed:", error.message);
+        process.exitCode = 1;
+        return;
     }
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+startServer();

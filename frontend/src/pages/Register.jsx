@@ -17,6 +17,7 @@ export default function Register() {
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
+      
     } finally {
       setLoading(false);
     }
